@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="~{layouts/layout}">
+  <th:block layout:fragment="css">
+    <link rel="stylesheet" th:href="@{/css/upload.css}">
+    <link rel="stylesheet" th:href="@{/css/read.css}">
+    <link rel="stylesheet" th:href="@{/css/starrr.css}">
+  </th:block>
+  <div class="container px-6 mx-auto grid" layout:fragment="content">
+    <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">Movie Specifics</h2>
+    <!-- New Table -->
+    <div class="w-full overflow-x-auto">
+      <div class="px-4 py-3 mb-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
+        <form action="" method="post">
+          <div class="mt-4">
+            <label class="block text-sm">
+              <span class="text-gray-700 dark:text-gray-400">Title</span>
+              <input
+                class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
+                placeholder="Title"
+                name="title"
+                th:value="${dto.title}"
+                readonly
+              />
+            </label>
+          </div>
+          <div class="mt-4">
+            <label class="block text-sm">
+              <span class="text-gray-700 dark:text-gray-400">Reviews</span>
+              <input
+                class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
+                placeholder="Reviews"
+                name="reviewCnt"
+                th:value="${dto.reviewCnt}"
+                readonly
+              />
+            </label>
+          </div>
+          <div class="mt-4">
+            <label class="block text-sm">
+              <span class="text-gray-700 dark:text-gray-400">Rating</span>
+              <input
+                class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
+                placeholder="Rating"
+                name="avg"
+                th:value="${dto.avg}"
+                readonly
+              />
+            </label>
+          </div>
+          <div class="mt-4">
+            <a
+              sec:authorize="hasRole('ADMIN')"
+              th:href="@{/movie/modify(mno=${dto.mno}, page=${pageRequestDTO.page}, size=${pageRequestDTO.size}, type=${pageRequestDTO.type}, keyword=${pageRequestDTO.keyword})}"
+              class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple"
+              >Modify</a
+            >
+            <a
+              th:href="@{/movie/list(page=${pageRequestDTO.page}, size=${pageRequestDTO.size}, type=${pageRequestDTO.type}, keyword=${pageRequestDTO.keyword})}"
+              class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-blue-600 border border-transparent rounded-lg active:bg-blue-600 hover:bg-blue-700 focus:outline-none focus:shadow-outline-blue"
+              >List</a
+            >
+          </div>
+        </form>
+      </div>
+      <!-- poster 영역 -->
+      <div class="uploadResult mb-4">
+        <ul>
+          <li th:each="image : ${dto.movieImages}">
+            <img 
+                class="block"
+                th:if="${image.path!=null}"
+                th:src="|/upload/display?fileName=${image.getThumbnailURL}|"
+                th:attr="data-file=${image.getThumbnailURL()}" data-bs-toggle="modal" data-bs-target="#imgModal"
+               />
+          </li>
+        </ul>
+      </div>
+
+      <!-- review 영역 -->
+      <div>
+        <div class="flex items-center">
+          <span>Register Review [<span class="review-cnt"></span>]</span>
+        </div>
+      </div>
+
+      <!-- review create 영역 -->
+      <div class="px-4 py-3 mb-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
+        <form action="" method="post" id="reviewForm" sec:authorize="hasAnyRole('MEMBER', 'ADMIN')">
+          <input type="hidden" name="rno">
+          <input type="hidden" name="mid" th:value="${#authentication.principal.memberDTO.mid}">
+          <input type="hidden" name="mno" th:value="${dto.mno}">
+          <input type="hidden" name="grade">
+          <div class="mt-4">
+            <label class="block text-sm">
+              <span class="text-gray-700 dark:text-gray-400">Writer</span>
+              <input
+                th:value="${#authentication.principal.memberDTO.nickName}"
+                name="nickName"
+                class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input"
+                readonly
+                />
+            </label>
+          </div>
+  
+          <label class="block mt-4 text-sm">
+            <span class="text-gray-700 dark:text-gray-400">Review</span>
+            <textarea
+              name="text"
+              class="block w-full mt-1 text-sm dark:text-gray-300 dark:border-gray-600 dark:bg-gray-700 form-textarea focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:focus:shadow-outline-gray"
+              rows="3"
+              placeholder="Register your review"
+            ></textarea>
+          </label>
+          <label class="block mt-4 text-sm">
+            <span class="tex-gray-700 dark:text-gray-400">Grade</span>
+            <div class="starrr"></div>
+          </label>
+          <button type="submit" class="btn btn-success">Register</button>
+        </form>
+      </div>
+
+      <!-- Review 목록 -->
+       <div class="mt-2 px-4 py-3 mb-8 bh-white rounded-lg shadow-md dark:bg-gray-800 reviewList"></div>
+    </div>
+    <!-- Modal 영역 -->
+    <div class="modal fade" id="imgModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Title</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <img src="" alt="">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <th:block layout:fragment="script">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script th:src="@{/assets/js/starrr.js}"></script>
+    <script>
+      const title = "[[${dto.title}]]";
+      const mno = "[[${dto.mno}]]";
+
+      // 로그인 유저 가져오기
+      const loginUser = "[[${#authentication.name}]]";
+
+      let grade = 0;
+      $('.starrr').starrr({
+        rating:grade,
+        change: function(e, value){
+          console.log('new rating is ' + value);
+          grade = value;
+        }
+      })
+    </script>
+    <script th:src="@{/js/read.js}"></script>
+    <script th:src="@{/js/review.js}"></script>
+  </th:block>
+</html>
